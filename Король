@@ -17,6 +17,7 @@ namespace qwerty
             int userHeatPoints = 200, userDamage = 200, userMoney = 200;
             string userInput;
             int indexEnemyToWar;
+            int countOfDefeatedCountries = 0;
 
             for (int i = 0; i < countOfEnemies; i++)
             {
@@ -49,12 +50,12 @@ namespace qwerty
                             }
 
                             Console.WriteLine("\n--Нападение случайного соседнего государства!--");
-                            isPaid = War(ref enemiesHeatPoints[indexEnemyToWar], enemiesDamage[indexEnemyToWar], ref userHeatPoints, userDamage,  ref userMoney, random, false);
+                            isPaid = War(ref enemiesHeatPoints[indexEnemyToWar], enemiesDamage[indexEnemyToWar], ref userHeatPoints, userDamage, ref userMoney, random, false);
                             ShowInfoWar(enemiesHeatPoints[indexEnemyToWar], enemiesDamage[indexEnemyToWar], userHeatPoints, userDamage);
 
                             if (userHeatPoints > 0 && !isPaid)
                             {
-                                DefeatCountry(ref enemiesHeatPoints, ref enemiesDamage, ref indexOfDefeatedCountries, ref userHeatPoints, ref userDamage, ref userMoney, indexEnemyToWar);
+                                DefeatCountry(enemiesHeatPoints, enemiesDamage, ref indexOfDefeatedCountries, ref userHeatPoints, ref userDamage, ref userMoney, indexEnemyToWar, ref countOfDefeatedCountries);
                             }
                         }
                         break;
@@ -74,7 +75,7 @@ namespace qwerty
 
                         if (userHeatPoints > 0)
                         {
-                            DefeatCountry(ref enemiesHeatPoints, ref enemiesDamage, ref indexOfDefeatedCountries, ref userHeatPoints, ref userDamage, ref userMoney, indexEnemyToWar);
+                            DefeatCountry(enemiesHeatPoints, enemiesDamage, ref indexOfDefeatedCountries, ref userHeatPoints, ref userDamage, ref userMoney, indexEnemyToWar, ref countOfDefeatedCountries);
                         }
                         break;
                     default:
@@ -83,7 +84,7 @@ namespace qwerty
                         break;
                 }
 
-                CheckWinAndPlay(ref isWin, ref isPlay, enemiesHeatPoints, userHeatPoints);
+                CheckWinAndPlay(ref isWin, ref isPlay, enemiesHeatPoints, userHeatPoints, countOfDefeatedCountries);
             }
 
             Console.WriteLine("\n-- G A M E  O V E R --");
@@ -99,7 +100,7 @@ namespace qwerty
                 Console.WriteLine("\n       Вы не выдержали натиска соседнего государства... Ваша цивилизация пала.");
             }
         }
-        
+
         static int EnterInt()
         {
             bool isDigit;
@@ -126,7 +127,7 @@ namespace qwerty
 
             for (int i = 0; i < indexOfDefeatedCountries.Length; i++)
             {
-                Console.WriteLine($"\n      {i+1}е Государство");
+                Console.WriteLine($"\n      {i + 1}е Государство");
 
                 if (indexOfDefeatedCountries[i] == i)
                 {
@@ -138,7 +139,7 @@ namespace qwerty
                 }
             }
         }
-        
+
         static bool UpgradeStatic(ref int userHeatPoints, ref int userDamage, ref int userMoney, Random random)
         {
             string userInput;
@@ -224,7 +225,7 @@ namespace qwerty
             Console.WriteLine("\n       Вражеская статистика");
             Console.WriteLine($"\n     @Прочность: {enemyHeatPoints}\n     @Наносимый урон: {enemyDamage}");
         }
-        
+
         static bool TryToSkipWar(ref int userMoney, Random random)
         {
             int moneyToSkipWar = random.Next(200, 1000);
@@ -262,12 +263,13 @@ namespace qwerty
                     return false;
             }
         }
-        
-        static void DefeatCountry(ref int[] enemiesHeatPoints, ref int[] enemiesDamage, ref int[] indexOfDefeatedCountries, ref int userHeatPoints, ref int userDamage, ref int userMoney, int indexEnemyToWar)
+
+        static void DefeatCountry(int[] enemiesHeatPoints, int[] enemiesDamage, ref int[] indexOfDefeatedCountries, ref int userHeatPoints, ref int userDamage, ref int userMoney, int indexEnemyToWar, ref int countOfDefeatedCountries)
         {
             userHeatPoints += 200;
             userDamage += 200;
             userMoney += 200;
+            countOfDefeatedCountries += 1;
             Console.WriteLine($"\n      Победа! Вы захватили государство №{indexEnemyToWar + 1}");
             ToContinue();
 
@@ -286,24 +288,14 @@ namespace qwerty
             Console.ReadKey();
         }
 
-        static void CheckWinAndPlay(ref bool isWin, ref bool isPlay, int[] enemiesHeatPoints, int userHeatPoints)
+        static void CheckWinAndPlay(ref bool isWin, ref bool isPlay, int[] enemiesHeatPoints, int userHeatPoints, int countOfDefeatedCountries)
         {
             if (userHeatPoints <= 0)
             {
                 isPlay = false;
             }
 
-            int countDefeated = 0;
-
-            for (int i = 0; i < enemiesHeatPoints.Length; i++)
-            {
-                if (enemiesHeatPoints[i] <= 0)
-                {
-                    countDefeated += 1;
-                }
-            }
-
-            if (countDefeated == enemiesHeatPoints.Length)
+            if (countOfDefeatedCountries == enemiesHeatPoints.Length)
             {
                 isWin = true;
                 isPlay = false;
