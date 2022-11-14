@@ -54,7 +54,7 @@ namespace qwerty
 
                             if (userHitPoints > 0 && !isPaid)
                             {
-                                DefeatCountry(enemiesHitPoints, enemiesDamage, ref indexOfDefeatedCountries, ref userHitPoints, ref userDamage, ref userMoney, indexEnemyToWar, ref countOfDefeatedCountries);
+                                DefeatCountry(enemiesHitPoints, ref indexOfDefeatedCountries, ref userHitPoints, ref userDamage, ref userMoney, indexEnemyToWar, ref countOfDefeatedCountries);
                             }
                         }
                         break;
@@ -74,7 +74,7 @@ namespace qwerty
 
                         if (userHitPoints > 0)
                         {
-                            DefeatCountry(enemiesHitPoints, enemiesDamage, ref indexOfDefeatedCountries, ref userHitPoints, ref userDamage, ref userMoney, indexEnemyToWar, ref countOfDefeatedCountries);
+                            DefeatCountry(enemiesHitPoints, ref indexOfDefeatedCountries, ref userHitPoints, ref userDamage, ref userMoney, indexEnemyToWar, ref countOfDefeatedCountries);
                         }
                         break;
                     default:
@@ -263,7 +263,7 @@ namespace qwerty
             }
         }
 
-        static void DefeatCountry(int[] enemiesHitPoints, int[] enemiesDamage, ref bool[] indexOfDefeatedCountries, ref int userHitPoints, ref int userDamage, ref int userMoney, int indexEnemyToWar, ref int countOfDefeatedCountries)
+        static void DefeatCountry(int[] enemiesHitPoints, ref bool[] indexOfDefeatedCountries, ref int userHitPoints, ref int userDamage, ref int userMoney, int indexEnemyToWar, ref int countOfDefeatedCountries)
         {
             userHitPoints += 200;
             userDamage += 200;
