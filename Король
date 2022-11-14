@@ -1,0 +1,313 @@
+using System;
+
+namespace qwerty
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Console.WriteLine("--ДОБРО ПОЖАЛОВАТЬ В ИГРУ 'КОРОЛЬ'--");
+            Console.WriteLine("\n  Введите число соседних государств");
+
+            int countOfEnemies = EnterInt();
+            bool isPlay = true, isWin = false, isPaid;
+            Random random = new Random();
+            int[] enemiesHeatPoints = new int[countOfEnemies], enemiesDamage = new int[countOfEnemies];
+            int[] indexOfDefeatedCountries = new int[countOfEnemies];
+            int userHeatPoints = 200, userDamage = 200, userMoney = 200;
+            string userInput;
+            int indexEnemyToWar;
+
+            for (int i = 0; i < countOfEnemies; i++)
+            {
+                enemiesHeatPoints[i] = random.Next(600);
+                enemiesDamage[i] = random.Next(100, 500);
+                indexOfDefeatedCountries[i] = 999;
+            }
+
+            while (isPlay && !isWin)
+            {
+                Console.Clear();
+                Console.WriteLine("-- К О Р О Л Ь -- ");
+                ShowInfo(userHeatPoints, userDamage, userMoney, enemiesHeatPoints, enemiesDamage, indexOfDefeatedCountries);
+                Console.WriteLine("\n--Ваш ход, милорд--\n\n      1) Улучшить параметр(+ 0-200)\n      2) Напасть на соседа");
+                Console.Write("  Ввод...");
+                userInput = Console.ReadLine();
+
+                switch (userInput)
+                {
+                    case "1":
+                        bool willWar = UpgradeStatic(ref userHeatPoints, ref userDamage, ref userMoney, random);
+
+                        if (willWar)
+                        {
+                            indexEnemyToWar = random.Next(enemiesHeatPoints.Length);
+
+                            while (indexOfDefeatedCountries[indexEnemyToWar] != 999)
+                            {
+                                indexEnemyToWar = random.Next(enemiesHeatPoints.Length);
+                            }
+
+                            Console.WriteLine("\n--Нападение случайного соседнего государства!--");
+                            isPaid = War(ref enemiesHeatPoints[indexEnemyToWar], enemiesDamage[indexEnemyToWar], ref userHeatPoints, userDamage,  ref userMoney, random, false);
+                            ShowInfoWar(enemiesHeatPoints[indexEnemyToWar], enemiesDamage[indexEnemyToWar], userHeatPoints, userDamage);
+
+                            if (userHeatPoints > 0 && !isPaid)
+                            {
+                                DefeatCountry(ref enemiesHeatPoints, ref enemiesDamage, ref indexOfDefeatedCountries, ref userHeatPoints, ref userDamage, ref userMoney, indexEnemyToWar);
+                            }
+                        }
+                        break;
+                    case "2":
+                        Console.WriteLine("\n--Нападение--");
+                        Console.WriteLine("\n       На какое государство Вы хотите напасть(номер)");
+                        indexEnemyToWar = EnterInt() - 1;
+
+                        while (indexOfDefeatedCountries[indexEnemyToWar] != 999)
+                        {
+                            Console.WriteLine("       Это государство Вы уже уничтожили, милорд. Сделайте выбор еще раз.");
+                            indexEnemyToWar = EnterInt() - 1;
+                        }
+
+                        War(ref enemiesHeatPoints[indexEnemyToWar], enemiesDamage[indexEnemyToWar], ref userHeatPoints, userDamage, ref userMoney, random, true);
+                        ShowInfoWar(enemiesHeatPoints[indexEnemyToWar], enemiesDamage[indexEnemyToWar], userHeatPoints, userDamage);
+
+                        if (userHeatPoints > 0)
+                        {
+                            DefeatCountry(ref enemiesHeatPoints, ref enemiesDamage, ref indexOfDefeatedCountries, ref userHeatPoints, ref userDamage, ref userMoney, indexEnemyToWar);
+                        }
+                        break;
+                    default:
+                        Console.WriteLine("\n     ОШИБКА! Вы ввели несуществующую команду");
+                        ToContinue();
+                        break;
+                }
+
+                CheckWinAndPlay(ref isWin, ref isPlay, enemiesHeatPoints, userHeatPoints);
+            }
+
+            Console.WriteLine("\n-- G A M E  O V E R --");
+
+            if (isWin)
+            {
+                Console.Clear();
+                ShowInfo(userHeatPoints, userDamage, userMoney, enemiesHeatPoints, enemiesDamage, indexOfDefeatedCountries);
+                Console.WriteLine("\n       Поздравляю, милорд! Вы захватили все соседние государства!");
+            }
+            else
+            {
+                Console.WriteLine("\n       Вы не выдержали натиска соседнего государства... Ваша цивилизация пала.");
+            }
+        }
+        
+        static int EnterInt()
+        {
+            bool isDigit;
+            int digit;
+
+            Console.Write("  Ввод...");
+            isDigit = int.TryParse(Console.ReadLine(), out digit);
+
+            while (!isDigit || digit <= 0)
+            {
+                Console.WriteLine("\n  ОШИБКА! Введите корректное число: ");
+                Console.Write("  Ввод...");
+                isDigit = int.TryParse(Console.ReadLine(), out digit);
+            }
+
+            return digit;
+        }
+
+        static void ShowInfo(int userHeatPoints, int userDamage, int userMoney, int[] enemiesHeatPoints, int[] enemiesDamage, int[] indexOfDefeatedCountries)
+        {
+            Console.WriteLine("\n--Сводка информации на текущий месяц--");
+            Console.WriteLine($"\n     @Прочность: {userHeatPoints}\n     @Наносимый урон: {userDamage}\n     @Казна: {userMoney}");
+            Console.WriteLine("\n     Статистики соседних государств");
+
+            for (int i = 0; i < indexOfDefeatedCountries.Length; i++)
+            {
+                Console.WriteLine($"\n      {i+1}е Государство");
+
+                if (indexOfDefeatedCountries[i] == i)
+                {
+                    Console.WriteLine("        ЗАХВАЧЕНО");
+                }
+                else
+                {
+                    Console.WriteLine($"        @Прочность: {enemiesHeatPoints[i]}\n        @Наносимый урон: {enemiesDamage[i]}");
+                }
+            }
+        }
+        
+        static bool UpgradeStatic(ref int userHeatPoints, ref int userDamage, ref int userMoney, Random random)
+        {
+            string userInput;
+            bool isInputCorrect = true;
+
+            Console.WriteLine("\n--Улучшение параметра--\n\n      1)Прочность\n      2)Урон\n      3)Казна");
+            Console.Write("  Ввод...");
+            userInput = Console.ReadLine();
+
+            switch (userInput)
+            {
+                case "1":
+                    userHeatPoints += random.Next(0, 201);
+                    break;
+                case "2":
+                    userDamage += random.Next(0, 201);
+                    break;
+                case "3":
+                    userMoney += random.Next(0, 201);
+                    break;
+                default:
+                    isInputCorrect = false;
+                    Console.WriteLine("\n     ОШИБКА! Вы ввели несуществующую команду");
+                    ToContinue();
+                    break;
+            }
+
+            return isInputCorrect;
+        }
+
+        static bool War(ref int enemyHeatPoints, int enemyDamage, ref int userHeatPoints, int userDamage, ref int userMoney, Random random, bool isAttack)
+        {
+            ShowInfoWar(enemyHeatPoints, enemyDamage, userHeatPoints, userDamage);
+
+            bool isPaid = false;
+
+            if (!isAttack)
+            {
+                isPaid = TryToSkipWar(ref userMoney, random);
+            }
+
+            if (!isPaid)
+            {
+                while (userHeatPoints > 0 & enemyHeatPoints > 0)
+                {
+                    Console.Clear();
+                    Console.WriteLine("--Война--");
+                    ShowInfoWar(enemyHeatPoints, enemyDamage, userHeatPoints, userDamage);
+                    ToContinue();
+
+                    if (!isAttack)
+                    {
+                        userHeatPoints -= enemyDamage;
+
+                        if (userHeatPoints <= 0)
+                        {
+                            break;
+                        }
+
+                        enemyHeatPoints -= userDamage;
+                    }
+                    else
+                    {
+                        enemyHeatPoints -= userDamage;
+
+                        if (enemyHeatPoints <= 0)
+                        {
+                            break;
+                        }
+
+                        userHeatPoints -= enemyDamage;
+                    }
+                }
+            }
+
+            return isPaid;
+        }
+
+        static void ShowInfoWar(int enemyHeatPoints, int enemyDamage, int userHeatPoints, int userDamage)
+        {
+            Console.WriteLine("\n       Ваша статистика");
+            Console.WriteLine($"\n     @Прочность: {userHeatPoints}\n     @Наносимый урон: {userDamage}");
+            Console.WriteLine("\n       Вражеская статистика");
+            Console.WriteLine($"\n     @Прочность: {enemyHeatPoints}\n     @Наносимый урон: {enemyDamage}");
+        }
+        
+        static bool TryToSkipWar(ref int userMoney, Random random)
+        {
+            int moneyToSkipWar = random.Next(200, 1000);
+            string userInput;
+
+            Console.WriteLine("\n--Мирные переговоры--");
+            Console.WriteLine($"\n      Прибыл вражеский посол с сообщением о том, что символическая плата может уладить все разногласия ({moneyToSkipWar})");
+            Console.WriteLine($"\n      Ваша казна составляет {userMoney}. Вы принимаете предложение?(Да/Нет)");
+            Console.Write("  Ввод...");
+            userInput = Console.ReadLine().ToLower();
+
+            switch (userInput)
+            {
+                case "да":
+                    if (userMoney >= moneyToSkipWar)
+                    {
+                        userMoney -= moneyToSkipWar;
+                        Console.WriteLine("\n       Вы избежали войны, на этот раз...");
+                        ToContinue();
+                        return true;
+                    }
+                    else
+                    {
+                        Console.WriteLine("\n       К оружию!");
+                        ToContinue();
+                        return false;
+                    }
+                case "нет":
+                    Console.WriteLine("\n       К оружию!");
+                    ToContinue();
+                    return false;
+                default:
+                    Console.WriteLine("\n       Вы нагрубили послу, переговоры сорваны");
+                    ToContinue();
+                    return false;
+            }
+        }
+        
+        static void DefeatCountry(ref int[] enemiesHeatPoints, ref int[] enemiesDamage, ref int[] indexOfDefeatedCountries, ref int userHeatPoints, ref int userDamage, ref int userMoney, int indexEnemyToWar)
+        {
+            userHeatPoints += 200;
+            userDamage += 200;
+            userMoney += 200;
+            Console.WriteLine($"\n      Победа! Вы захватили государство №{indexEnemyToWar + 1}");
+            ToContinue();
+
+            for (int i = 0; i < enemiesHeatPoints.Length; i++)
+            {
+                if (enemiesHeatPoints[i] <= 0)
+                {
+                    indexOfDefeatedCountries[i] = i;
+                }
+            }
+        }
+
+        static void ToContinue()
+        {
+            Console.WriteLine("      Нажмите любую кнопку для обновления...");
+            Console.ReadKey();
+        }
+
+        static void CheckWinAndPlay(ref bool isWin, ref bool isPlay, int[] enemiesHeatPoints, int userHeatPoints)
+        {
+            if (userHeatPoints <= 0)
+            {
+                isPlay = false;
+            }
+
+            int countDefeated = 0;
+
+            for (int i = 0; i < enemiesHeatPoints.Length; i++)
+            {
+                if (enemiesHeatPoints[i] <= 0)
+                {
+                    countDefeated += 1;
+                }
+            }
+
+            if (countDefeated == enemiesHeatPoints.Length)
+            {
+                isWin = true;
+                isPlay = false;
+            }
+        }
+    }
+}
